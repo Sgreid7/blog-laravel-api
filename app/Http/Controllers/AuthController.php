@@ -2,34 +2,44 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Laravel\Passport\Http\Controllers\AccessTokenController;
+use Laravel\Passport\TokenRepository;
+use Lcobucci\JWT\Parser as JwtParser;
+use League\OAuth2\Server\AuthorizationServer;
+use Psr\Http\Message\ServerRequestInterface;
+// use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    protected $server;
+    protected $tokens;
+    protected $jwt;
+
+
+    public function __construct(AuthorizationServer $server,
+                                TokenRepository $tokens,
+                                JwtParser $jwt)
     {
-        $http = new \GuzzleHttp\Client;
+        $this->jwt = $jwt;
+        $this->server = $server;
+        $this->tokens = $tokens;
+    }
 
-        try {
-            $response = $http->post('http://127.0.0.1:8001/oauth/token', [
-                'form_params' => [
-                    'grant_type' => 'password',
-                    'client_id' => 2,
-                    'client_secret' => 'B3wuJT5ZzcrvqvqbGttLI53GJBvplLSByokkWfrG',
-                    'username' => $request->username,
-                    'password' => $request->password,
-                ]
-            ]);
 
-                    return $response->getBody();
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            if ($e->getCode() == 400) {
-                return response()->json('Invalid Request. Please enter a username or a password.', $e->getCode());
-            } else if ($e->getCode() == 401) {
-                return response()->json('Your credentials are incorrect. Please try again.', $e->getCode());
-            }
+    public function login(ServerRequestInterface $request)
+    {
+        $controller = new AccessTokenController($this->server, $this->tokens, $this->jwt);
 
-            return response()->json('Something went wrong on the server.', $e->getCode());
-        }
+        $request = $request->withParsedBody($request->getParsedBody() +
+        [
+            'grant_type' => 'password',
+            'client_id' => 2, //client id
+            'client_secret' => 'B3wuJT5ZzcrvqvqbGttLI53GJBvplLSByokkWfrG', //client secret
+        ]);
+
+
+        return with(new AccessTokenController($this->server, $this->tokens, $this->jwt))
+            ->issueToken($request);
+        
     }
 }
