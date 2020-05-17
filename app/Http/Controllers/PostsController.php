@@ -31,7 +31,11 @@ class PostsController extends Controller
             'body' => 'required|string'
         ]);
 
-        $post = Post::create($data);
+        $post = Post::create([
+            'user_id' => auth()->user()->id,
+            'title' => $request->title,
+            'body' => $request->body,
+        ]);
 
         return response($post, 201);
     }
@@ -46,6 +50,10 @@ class PostsController extends Controller
      */
     public function update(Request $request, Post $post)
     {
+        if ($post->user_id !== auth()->user()->id) {
+            return response()->json('Unauthorized', 401);
+        }
+
         $data = $request->validate([
             'title' => 'required|string',
             'body' => 'required|string'
@@ -64,6 +72,10 @@ class PostsController extends Controller
      */
     public function destroy(Post $post)
     {
+        if ($post->user_id !== auth()->user()->id) {
+            return response()->json('Unauthorized', 401);
+        }
+        
         $post->delete();
 
         return response('Deleted post', 200);

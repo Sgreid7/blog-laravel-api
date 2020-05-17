@@ -20,6 +20,9 @@ Route::middleware('auth:api')->group(function () {
     });
 
     Route::get('/posts', 'PostsController@index');
+    Route::post('/posts', 'PostsController@store');
+    Route::put('/posts/{post}', 'PostsController@update');
+    Route::delete('/posts/{post}', 'PostsController@destroy');
 
     Route::post('/logout', 'AuthController@logout');
 });
@@ -27,7 +30,3 @@ Route::middleware('auth:api')->group(function () {
 
 Route::post('/login', 'AuthController@login');
 Route::post('/signup', 'AuthController@signup');
-
-Route::post('/posts', 'PostsController@store');
-Route::put('/posts/{post}', 'PostsController@update');
-Route::delete('/posts/{post}', 'PostsController@destroy');
